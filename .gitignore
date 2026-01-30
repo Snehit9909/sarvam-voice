@@ -1,0 +1,21 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Audio files
+*.wav
+*.mp3
+
+# Logs
+*.log
+
+# Environment
+.env
+venv/
+
+# Streamlit
+.streamlit/
+
+# OS files
+Thumbs.db
+.DS_Store

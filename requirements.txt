@@ -1,0 +1,12 @@
+sarvamai
+sounddevice
+scipy
+numpy
+boto3  
+simpleaudio 
+requests
+soundfile
+openai-whisper
+chatterbox-tts
+streamlit
+elevenlabslib
