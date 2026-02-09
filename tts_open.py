@@ -1,7 +1,7 @@
 # tts_open.py
 import torchaudio
 from chatterbox.tts import ChatterboxTTS
-from config import OUTPUT_AUDIO_FILE
+from config.config import OUTPUT_AUDIO_FILE
 
 # Load Chatterbox TTS model
 tts_model = ChatterboxTTS.from_pretrained(device="cpu")

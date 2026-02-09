@@ -1,5 +1,5 @@
 import time
-from audio_utils import record_audio, play_audio
+from audio.audio_utils import record_audio, play_audio
 from stt_open import speech_to_text
 from tts_open import text_to_speech
 from agent.voice_agent import run_agent  # keep your Strands agent

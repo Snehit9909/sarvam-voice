@@ -1,6 +1,6 @@
 # stt_open.py
 import whisper
-from config import INPUT_AUDIO_FILE
+from config.config import INPUT_AUDIO_FILE
 
 # Load whisper model once (tiny or base for speed)
 model = whisper.load_model("base")

@@ -1,17 +1,21 @@
-from tts.tts_eleven import text_to_speech as eleven_tts
-from tts.tts1 import text_to_speech as sarvam_tts
-from config.config import TTS_CONFIG
+# from tts.tts_sarvam_stream import stream_tts_sarvam
+# from tts.tts_eleven_stream import speak_stream
 
-def run_tts(text: str, provider: str):
-    """
-    Route TTS based on provider.
-    """
-    if provider == "elevenlabs":
-        print("[TTS] Using ElevenLabs TTS")
-        return eleven_tts(text, voice=TTS_CONFIG["elevenlabs"]["voice"])
+# def run_tts(provider, text):
+#     if provider == "sarvam":
+#         return stream_tts_sarvam([text])
+#     if provider == "elevenlabs":
+#         return speak_stream(text)
+#     raise ValueError("Unknown TTS provider")
+from tts.tts_sarvam_stream import stream_tts_sarvam
+from tts.tts_eleven_stream import speak_stream
 
+def run_tts(provider, text, lang_code="en-IN"): # <--- Add lang_code here
     if provider == "sarvam":
-        print("[TTS] Using Sarvam TTS")
-        return sarvam_tts(text, voice=TTS_CONFIG["sarvam"]["voice"])
-
-    raise ValueError(f"Unsupported TTS provider: {provider}")
+        # Pass the lang_code to the actual streaming function
+        return stream_tts_sarvam(text, lang_code=lang_code) 
+    
+    if provider == "elevenlabs":
+        return speak_stream(text)
+        
+    raise ValueError(f"Unknown TTS provider: {provider}")
