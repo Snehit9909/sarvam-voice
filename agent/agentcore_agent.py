@@ -1,30 +1,23 @@
 import boto3
 import json
 import os
-import uuid
-
+from config.config import CURRENT_AGENT_ARN
 client = boto3.client(
     "bedrock-agentcore",
     region_name=os.getenv("AWS_REGION", "us-east-1")
 )
 
-AGENT_RUNTIME_ARN = os.getenv("AGENT_RUNTIME_ARN")
-QUALIFIER = os.getenv("AGENT_QUALIFIER", "DEFAULT")
-
-
-def run_agent(user_input: str) -> str:
-    session_id = str(uuid.uuid4())
-
-    payload = {
-        "prompt": user_input   
-    }
+def run_agent(user_input: str, session_id: str) -> str:
+    target_arn = os.getenv("AGENT_RUNTIME_ARN", CURRENT_AGENT_ARN)
+    qualifier = os.getenv("AGENT_QUALIFIER", "DEFAULT")
+    payload = {"prompt": user_input}
 
     try:
-        print("[DEBUG] Invoking AgentCore...", flush=True)
+        print(f"[DEBUG] Invoking Agent: {target_arn} | Session: {session_id}", flush=True)
 
         response = client.invoke_agent_runtime(
-            agentRuntimeArn=AGENT_RUNTIME_ARN,
-            qualifier=QUALIFIER,
+            agentRuntimeArn=target_arn,
+            qualifier=qualifier,
             runtimeSessionId=session_id,
             payload=json.dumps(payload).encode("utf-8"),
             contentType="application/json",
@@ -32,22 +25,23 @@ def run_agent(user_input: str) -> str:
         )
 
         raw_body = response["response"].read().decode("utf-8")
-        print("[DEBUG] Raw response:", raw_body, flush=True)
-
         data = json.loads(raw_body)
+        print(f"[DEBUG] Raw Agent Data: {data}", flush=True)
 
-        # Your agent returns either of these
-        text = (
-            data.get("message")     
-            or data.get("result")
-            or data.get("completion")
-            or data.get("output")
-            or ""
-        )
+        result = data.get("result", {})
+        content_list = result.get("content", [])
 
-        return text.strip()
+        if content_list and isinstance(content_list, list):
+            # Extract text from the first item in the content list
+            text = content_list[0].get("text", "")
+        else:
+            # Fallback for other response formats
+            text = data.get("message") or data.get("output") or ""
 
+        # Ensure we return a clean string, not a dictionary
+        return str(text).strip() if text else "I'm sorry, I couldn't generate a response."
 
     except Exception as e:
         print(f"[ERROR] AgentCore invocation failed: {e}", flush=True)
-        return ""
+        return "I'm having trouble connecting to my brain right now."
+

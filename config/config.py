@@ -4,7 +4,31 @@ AWS_REGION = "us-east-1"
 BEDROCK_MODEL_ID = "anthropic.claude-3-5-sonnet-20240620-v1:0"
 
 
-AGENT_RUNTIME_ARN = os.getenv("arn:aws:bedrock-agentcore:us-east-1:762233739050:runtime/app3-3trSxmCEpL")
+# AGENT_RUNTIME_ARN = os.getenv("arn:aws:bedrock-agentcore:us-east-1:762233739050:runtime/app3-3trSxmCEpL")
+
+# ===== AGENT CONFIGURATION =====
+AGENT_CONFIG = {
+    "agent_a": {
+        "name": "General Assistant",
+        "runtime_arn": "arn:aws:bedrock-agentcore:us-east-1:762233739050:runtime/app3-3trSxmCEpL"
+    },
+    "agent_b": {
+        "name": "Banking Agent",
+        "runtime_arn": "arn:aws:bedrock-agentcore:us-east-1:762233739050:runtime/test_bank-74XtOQ9Uy7"
+    },
+    "agent_c": {
+        "name": "Shipement Tracking Agent",
+        "runtime_arn": "arn:aws:bedrock-agentcore:us-east-1:762233739050:runtime/test_track-CpuOQN9ms8"
+    }
+}
+
+# Select which agent to use (defaults to agent_a)
+DEFAULT_AGENT = os.getenv("ACTIVE_AGENT", "agent_a")
+
+if DEFAULT_AGENT not in AGENT_CONFIG:
+    raise ValueError(f"Invalid ACTIVE_AGENT: {DEFAULT_AGENT}")
+
+CURRENT_AGENT_ARN = AGENT_CONFIG[DEFAULT_AGENT]["runtime_arn"]
 
 
 # ===== SARVAM =====
@@ -47,15 +71,15 @@ STT_CONFIG = {
         "model": "saarika:v2.5",
         "language": "en-IN"
     },
-    "assemblyai": {
-        "provider": "assemblyai",
-        "models": {
-            "universal_2": "universal-2",       
-            "universal_3_pro": "universal-3-pro" 
-        },
-        "default_model": "universal_2"
+        "assemblyai": {
+            "provider": "assemblyai",
+            "models": {
+                "Universal-2": "universal-2",       
+                "Universal-3 Pro": "universal-3-pro"
+            },
+            "default_model": "Universal-2"
+        }
     }
-}
 
 DEFAULT_STT_PROVIDER = os.getenv("STT_PROVIDER", "sarvam")
 
@@ -84,7 +108,7 @@ STT_LANGUAGES = {
 }
 
 # Add a default language helper
-DEFAULT_INPUT_LANGUAGE = os.getenv("INPUT_LANGUAGE", "unknown")
+# DEFAULT_INPUT_LANGUAGE = os.getenv("INPUT_LANGUAGE", "unknown")
 
 # ElevenLabs voices (for reference, optional)
 TTS_VOICES = [

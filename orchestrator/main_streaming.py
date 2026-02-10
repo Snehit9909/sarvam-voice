@@ -3,16 +3,15 @@ import io
 import os
 import time 
 import signal
-
+import uuid
 from stt.stt_router import stream_stt
 from agent.agentcore_agent import run_agent
 from tts.tts_router import run_tts
 from audio.audio_utils import play_audio_stream, release_mic, clear_audio_queue
 from config.config import DEFAULT_STT_PROVIDER, DEFAULT_TTS_PROVIDER
 from stt.stt_assembly import purge_queue, mic_gate, transcript_queue
-# ------------------------------------
+
 # Windows UTF-8 safety
-# ------------------------------------
 if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
@@ -37,15 +36,13 @@ PROVIDER_STREAMING_STT = {"assemblyai"}
 # Main Engine
 # ------------------------------------
 def run():
+    session_id = str(uuid.uuid4())
     current_stt = os.getenv("STT_PROVIDER", DEFAULT_STT_PROVIDER).lower()
     current_tts = os.getenv("TTS_PROVIDER", DEFAULT_TTS_PROVIDER).lower()
-    assembly_model = os.getenv("ASSEMBLY_MODEL", "universal_2")
+    assembly_model = os.getenv("ASSEMBLY_MODEL", "universal_3_pro")
 
     print(" STARTING STREAMING VOICE ASSISTANT", flush=True)
     print(f" STT: {current_stt} |  TTS: {current_tts}", flush=True)
-
-    if current_stt == "assemblyai":
-        print(f" AssemblyAI Model: {assembly_model}", flush=True)
 
     print(" ENGINE READY — SPEAK INTO YOUR MICROPHONE", flush=True)
 
@@ -58,44 +55,31 @@ def run():
 
         for user_text in stream_stt(current_stt):
             if not mic_gate.is_set():
-                while not transcript_queue.empty():
-                    transcript_queue.get()
+                purge_queue()
                 continue
 
-            text_clean = "".join(
-                c for c in user_text if ord(c) < 128
-            ).lower().strip()
-
-            if len(text_clean) < 2:
+            text_clean = "".join(c for c in user_text if ord(c) < 128).lower().strip()
+            
+            if len(text_clean.split()) < 3:
                 continue
 
             print(f"\n User said: {user_text}", flush=True)
 
-            if "exit" in text_clean or "quit" in text_clean:
+            if any(cmd in text_clean for cmd in ["exit", "quit"]):
                 print(" Goodbye", flush=True)
                 return
 
-            # ---------------- Agent ----------------
-            agent_start = time.time()
-            response_text = run_agent(text_clean)
-            agent_latency = (time.time() - agent_start) * 1000
-
-            # ---------------- TTS ----------------
-            tts_start = time.time()
+            response_text = run_agent(text_clean, session_id=session_id)
             audio_stream = run_tts(current_tts, response_text)
 
-            mic_gate.clear()
-            print(" [MIC] Muted", flush=True)
-
+            mic_gate.clear() # STOP LISTENING
             try:
                 play_audio_stream(audio_stream)
+                time.sleep(1.2) # Wait for room to go silent
             finally:
-                time.sleep(0.5)
                 purge_queue()
-                
                 clear_audio_queue()
-                
-                mic_gate.set()
+                mic_gate.set() # START LISTENING
                 print(" [MIC] Listening...\n", flush=True)
 
     # -------------------------------------------------
@@ -115,7 +99,9 @@ def run():
                         continue
 
                     text_clean = "".join(c for c in user_text if ord(c) < 128).lower().strip()
-                    if len(text_clean) < 2:
+                    
+                    # REPETITION FILTER: Ignore noise/echoes shorter than 1 words
+                    if len(text_clean.split()) < 1:
                         continue
 
                     print(f" User said: {user_text}", flush=True)
@@ -124,40 +110,31 @@ def run():
                         print(" Goodbye", flush=True)
                         return
 
-                    # --- Agent Call with Brevity Instruction ---
-                    agent_start = time.time()
-                    # We inject a brevity hint directly into the user text
-                    response_text = run_agent(f"{text_clean} (Answer briefly in one sentence)")
-                    agent_latency = (time.time() - agent_start) * 1000
-
+                    response_text = run_agent(f"{text_clean} (Answer briefly)", session_id=session_id)
                     print(f" Assistant: {response_text}", flush=True)
 
                     # --- TTS & Playback ---
                     audio_stream = run_tts(current_tts, response_text)
 
                     def ttfb_wrapper(stream):
-                        nonlocal tts_start, agent_latency
+                        nonlocal tts_start
                         first = True
                         for chunk in stream:
                             if first:
-                                ttfb = (time.time() - tts_start) * 1000
-                                print(f" Agent: {agent_latency:.0f}ms | TTS TTFB: {ttfb:.0f}ms", flush=True)
+                                print(f" TTS Started playing", flush=True)
                                 first = False
                             yield chunk
 
-                    # CLOSE GATE BEFORE PLAYING
-                    mic_gate.clear()
+                    mic_gate.clear() # MUTE MIC
                     print(" [MIC] Muted (Assistant Speaking)", flush=True)
 
                     try:
                         tts_start = time.time()
                         play_audio_stream(ttfb_wrapper(audio_stream))
                         
-                        # --- POST-PLAYBACK DRAIN ---
-                        # Give room echoes 400ms to settle
-                        time.sleep(0.4) 
+                        # --- ENHANCED POST-PLAYBACK DRAIN ---
+                        time.sleep(1.2) # Allow 1.2s for echo to clear
                         
-                        # Clear any 'hallucinations' that happened during/after playback
                         while not transcript_queue.empty():
                             try:
                                 discarded = transcript_queue.get_nowait()
@@ -166,16 +143,16 @@ def run():
                                 break
                     finally:
                         clear_audio_queue()
-                        mic_gate.set() # OPEN GATE AFTER DRAIN
+                        mic_gate.set() # OPEN MIC
                         print(" [MIC] Listening...\n", flush=True)
 
             except Exception as e:
                 print(f" [Main] Loop error: {e}", flush=True)
                 time.sleep(1)
 
-
 if __name__ == "__main__":
     run()
+
     
 # import sys
 # import io
