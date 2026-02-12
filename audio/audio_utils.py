@@ -29,7 +29,7 @@ VAD_MODEL.to(torch.device("cpu"))
 # -------------------------------------------------
 # VAD detection (RAW PCM)
 # -------------------------------------------------
-def is_speech(pcm_bytes, threshold=0.15, samplerate=16000):
+def is_speech(pcm_bytes, threshold=0.5, samplerate=16000):
     if not pcm_bytes:
         return False
 
@@ -105,8 +105,6 @@ def play_audio_stream(audio_chunks, samplerate=22050):
     """
     Plays TTS audio chunks (int16 PCM).
     """
-    release_mic()
-
     stream = sd.RawOutputStream(
         samplerate=samplerate,
         channels=CHANNELS,
@@ -120,8 +118,6 @@ def play_audio_stream(audio_chunks, samplerate=22050):
             if chunk:
                 stream.write(np.frombuffer(chunk, dtype=np.int16))
     finally:
-        stream.stop()
+        # abort() stops playback immediately without waiting for buffer to drain
+        stream.abort() 
         stream.close()
-        
-  
-

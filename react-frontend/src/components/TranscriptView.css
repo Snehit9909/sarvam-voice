@@ -1,0 +1,137 @@
+.transcript-view {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border-radius: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1.5rem;
+    max-width: 800px;
+    margin: 2rem auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.transcript-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.transcript-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+}
+
+.clear-button {
+    padding: 0.5rem 1rem;
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    border-radius: 0.5rem;
+    color: #fca5a5;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.clear-button:hover {
+    background: rgba(239, 68, 68, 0.3);
+    border-color: rgba(239, 68, 68, 0.6);
+}
+
+.transcript-container {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.transcript-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.transcript-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.transcript-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.transcript-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.transcript-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.transcript-entry {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-radius: 1rem;
+    animation: slideIn 0.3s ease-out;
+}
+
+.transcript-entry.user {
+    background: rgba(59, 130, 246, 0.15);
+    border-left: 3px solid #3b82f6;
+}
+
+.transcript-entry.assistant {
+    background: rgba(34, 197, 94, 0.15);
+    border-left: 3px solid #22c55e;
+}
+
+.transcript-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.transcript-role {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.transcript-time {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-family: 'Courier New', monospace;
+}
+
+.transcript-text {
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .transcript-view {
+        padding: 1rem;
+    }
+
+    .transcript-container {
+        max-height: 300px;
+    }
+}

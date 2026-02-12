@@ -50,8 +50,14 @@ def stream_stt_sarvam():
 
             if is_speech(frame):
                 if not in_speech:
+                    # EMIT START_SPEECH SIGNAL
+                    yield {
+                        "type": "events", 
+                        "data": {"signal_type": "START_SPEECH"}
+                    }
                     pcm_buffer.clear()
                     in_speech = True
+                
                 pcm_buffer.extend(frame)
                 last_voice_time = time.time()
            
@@ -72,8 +78,8 @@ def stream_stt_sarvam():
                             language_code="en-IN"
                         )
                         text = response.transcript.strip()
-                        # Only queue if mic is STILL open (prevents race conditions)
-                        if text and mic_gate.is_set():
+                        # Only queue if text exists
+                        if text:
                             transcript_queue.put(text)
                     except Exception as e:
                         print(f" [Sarvam] STT error: {e}", flush=True)
@@ -82,7 +88,7 @@ def stream_stt_sarvam():
                     in_speech = False
 
             while not transcript_queue.empty():
-                yield transcript_queue.get()
+                yield {"type": "content", "text": transcript_queue.get()}
 
     finally:
         close_mic_stream()

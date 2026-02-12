@@ -1,0 +1,39 @@
+.visualizer-container {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 3rem auto;
+}
+
+.visualizer-orb {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  position: absolute;
+  filter: blur(2px);
+}
+
+.visualizer-ring {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 2px solid;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .visualizer-container {
+    width: 200px;
+    height: 200px;
+  }
+  
+  .visualizer-orb,
+  .visualizer-ring {
+    width: 150px;
+    height: 150px;
+  }
+}
