@@ -44,7 +44,9 @@ def is_speech(pcm_bytes, threshold=0.5, samplerate=16000):
                 samplerate
             ).item()
         if conf > threshold:
+            # print("Here is the voice activity from seleraio vad set to true")
             return True
+    # print("Here is the voice activity from seleraio vad set to false")    
     return False
 
 # -------------------------------------------------
@@ -101,23 +103,46 @@ def clear_audio_queue():
         except queue.Empty:
             break
 
-def play_audio_stream(audio_chunks, samplerate=22050):
+def play_audio_stream(audio_chunks, stop_event, samplerate=22050):
     """
-    Plays TTS audio chunks (int16 PCM).
+    Fully interruptible TTS playback.
     """
+
     stream = sd.RawOutputStream(
         samplerate=samplerate,
         channels=CHANNELS,
         dtype="int16",
-        blocksize=1024
+        blocksize=256  
     )
 
+    stream.start()
+
     try:
-        stream.start()
         for chunk in audio_chunks:
-            if chunk:
-                stream.write(np.frombuffer(chunk, dtype=np.int16))
+
+            if stop_event.is_set():
+                break
+
+            if not chunk:
+                continue
+
+            audio_array = np.frombuffer(chunk, dtype=np.int16)
+
+            # Write in tiny micro-chunks
+            step = 256
+            for i in range(0, len(audio_array), step):
+
+                if stop_event.is_set():
+                    break
+
+                stream.write(audio_array[i:i+step])
+
+    except Exception:
+        pass
+
     finally:
-        # abort() stops playback immediately without waiting for buffer to drain
-        stream.abort() 
+        try:
+            stream.stop()
+        except:
+            pass
         stream.close()

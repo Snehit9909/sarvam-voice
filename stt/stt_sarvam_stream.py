@@ -71,7 +71,6 @@ def stream_stt_sarvam():
                     wav_io.seek(0)
 
                     try:
-                        # Brevity reinforcement: append instruction to prompt if API supports it
                         response = client.speech_to_text.transcribe(
                             file=("speech.wav", wav_io, "audio/wav"),
                             model="saarika:v2.5",
@@ -92,3 +91,66 @@ def stream_stt_sarvam():
 
     finally:
         close_mic_stream()
+
+
+# import asyncio
+# import websockets
+# import json
+# import threading
+# import queue
+
+# from audio.audio_utils import (
+#     open_mic_stream,
+#     close_mic_stream,
+#     read_audio_frame,
+#     is_speech
+# )
+# from config.config import SARVAM_API_KEY
+
+# SARVAM_STT_URL = (
+#     f"wss://api.sarvam.ai/speech-to-text-translate/ws"
+#     f"?api_key={SARVAM_API_KEY}"
+# )
+
+
+# def stream_stt_sarvam(transcript_queue, stop_event):
+#     """
+#     Real-time streaming STT using Sarvam WebSocket.
+#     """
+
+#     asyncio.run(_run_ws(transcript_queue, stop_event))
+
+
+# async def _run_ws(transcript_queue, stop_event):
+
+#     async with websockets.connect(SARVAM_STT_URL) as websocket:
+
+#         print("✅ Connected to Sarvam STT WebSocket")
+
+#         mic_stream = open_mic_stream()
+
+#         async def send_audio():
+#             while not stop_event.is_set():
+#                 frame = read_audio_frame(mic_stream)
+
+#                 if frame and is_speech(frame):
+#                     await websocket.send(frame)
+
+#         async def receive_transcript():
+#             while not stop_event.is_set():
+#                 try:
+#                     message = await websocket.recv()
+#                     data = json.loads(message)
+
+#                     if "transcript" in data:
+#                         transcript = data["transcript"]
+#                         transcript_queue.put(transcript)
+#                         print("📝:", transcript)
+
+#                 except Exception as e:
+#                     print("Receive error:", e)
+#                     break
+
+#         await asyncio.gather(send_audio(), receive_transcript())
+
+#         close_mic_stream(mic_stream)
